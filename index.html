@@ -776,7 +776,7 @@
                 <div class="images-grid">
                     ${imagesHtml}
                 </div>
-                <div class="page-footer" dir="rtl">&#x202B;לקוח יקר! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד!&#x202C;</div>
+                <div class="page-footer" dir="rtl" style="unicode-bidi: plaintext;">לקוח יקר&#x200F;! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד&#x200F;!</div>
             </div>
         `;
 
@@ -817,22 +817,29 @@
         html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
             page.classList.remove('pdf-render');
             const pdfBlob = new Blob([blob], { type: 'application/pdf' });
-            const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
 
-            // Use native share on mobile if available
-            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                await navigator.share({ files: [pdfFile], title: filename });
-            } else {
-                // Download via anchor tag
-                const url = URL.createObjectURL(pdfBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            // On mobile: use share API. On desktop: download directly.
+            const isMobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 1024);
+
+            if (isMobile && navigator.canShare) {
+                try {
+                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+                    if (navigator.canShare({ files: [pdfFile] })) {
+                        await navigator.share({ files: [pdfFile], title: filename });
+                        return;
+                    }
+                } catch (e) { /* fall through to download */ }
             }
+
+            // Download via anchor tag
+            const url = URL.createObjectURL(pdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         });
     });
 </script>
