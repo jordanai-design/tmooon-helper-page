@@ -236,28 +236,38 @@
 
         /* Header */
         .page-header {
+            position: relative;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 6mm;
+            min-height: 40px;
         }
 
         .page-date {
             font-size: 14px;
             font-weight: 700;
             color: #333;
+            z-index: 1;
         }
 
         .page-client {
-            flex: 1;
+            position: absolute;
+            left: 0;
+            right: 0;
             text-align: center;
             font-size: 28px;
             font-weight: 700;
             color: #333;
+            pointer-events: none;
         }
 
         .a4-landscape .page-client {
             font-size: 32px;
+        }
+
+        .page-logo {
+            z-index: 1;
         }
 
         .page-logo img {
@@ -787,10 +797,11 @@
     downloadBtn.addEventListener('click', () => {
         const page = document.getElementById('a4-page');
         const isLandscape = page.classList.contains('a4-landscape');
+        const filename = `${document.getElementById('input-client').value || 'work-order'}.pdf`;
 
         const opt = {
             margin: 0,
-            filename: `${document.getElementById('input-client').value || 'work-order'}.pdf`,
+            filename,
             image: { type: 'jpeg', quality: 0.95 },
             html2canvas: { scale: 2, useCORS: true },
             jsPDF: {
@@ -800,7 +811,16 @@
             }
         };
 
-        html2pdf().set(opt).from(page).save();
+        // On iOS Safari, .save() doesn't work — open blob in new tab instead
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+            html2pdf().set(opt).from(page).outputPdf('blob').then(blob => {
+                const url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+            });
+        } else {
+            html2pdf().set(opt).from(page).save();
+        }
     });
 </script>
 
