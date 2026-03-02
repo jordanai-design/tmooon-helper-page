@@ -776,7 +776,7 @@
                 <div class="images-grid">
                     ${imagesHtml}
                 </div>
-                <div class="page-footer"><bdo dir="rtl">!לקוח יקר! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד</bdo></div>
+                <div class="page-footer">לקוח יקר, לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד</div>
             </div>
         `;
 
@@ -811,35 +811,27 @@
             }
         };
 
-        // Add pdf-render class to force desktop A4 styles during capture
+        // Force desktop A4 styles during capture
         page.classList.add('pdf-render');
 
-        html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
+        html2pdf().set(opt).from(page).toPdf().get('pdf').then(async pdf => {
             page.classList.remove('pdf-render');
-            const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 
-            // On mobile: use share API. On desktop: download directly.
+            // On mobile: use share API
             const isMobile = /Android|iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && window.innerWidth < 1024);
-
             if (isMobile && navigator.canShare) {
                 try {
-                    const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
-                    if (navigator.canShare({ files: [pdfFile] })) {
-                        await navigator.share({ files: [pdfFile], title: filename });
+                    const blob = pdf.output('blob');
+                    const file = new File([blob], filename, { type: 'application/pdf' });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({ files: [file], title: filename });
                         return;
                     }
-                } catch (e) { /* fall through to download */ }
+                } catch (e) { /* fall through */ }
             }
 
-            // Download via anchor tag
-            const url = URL.createObjectURL(pdfBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            // Desktop: direct save
+            pdf.save(filename);
         });
     });
 </script>
