@@ -732,11 +732,16 @@
         return `${parts[2]}.${parts[1]}.${parts[0]}`;
     }
 
+    // Replace regular spaces with non-breaking spaces for html2canvas
+    function nbspText(text) {
+        return text ? text.replace(/ /g, '\u00A0') : '';
+    }
+
     function generatePreview() {
         const date = formatDate(document.getElementById('input-date').value);
-        const client = document.getElementById('input-client').value;
-        const description = document.getElementById('input-description').value;
-        const notes = document.getElementById('input-notes').value;
+        const client = nbspText(document.getElementById('input-client').value);
+        const description = nbspText(document.getElementById('input-description').value);
+        const notes = nbspText(document.getElementById('input-notes').value);
 
         // Detect orientation
         const userChoice = document.querySelector('input[name="orientation"]:checked').value;
@@ -759,12 +764,14 @@
 
         // Build images HTML
         const imagesHtml = state.images.map(img => {
-            const dims = (img.dimWidth && img.dimHeight) ? `${img.dimWidth}*${img.dimHeight} ס"מ` : '';
+            const dims = (img.dimWidth && img.dimHeight) ? nbspText(`${img.dimWidth}*${img.dimHeight} ס"מ`) : '';
+            const color = nbspText(img.color);
+            const quantity = nbspText(img.quantity);
             return `
             <div class="image-item">
                 ${dims ? `<div class="dimensions-top">${dims}</div>` : ''}
-                ${img.color ? `<div class="meta"><span class="color">${img.color}</span></div>` : ''}
-                ${img.quantity ? `<div class="quantity-badge">${img.quantity}</div>` : ''}
+                ${color ? `<div class="meta"><span class="color">${color}</span></div>` : ''}
+                ${quantity ? `<div class="quantity-badge">${quantity}</div>` : ''}
                 <img src="${img.dataUrl}" alt="">
             </div>
         `;
@@ -783,7 +790,7 @@
                 <div class="images-grid">
                     ${imagesHtml}
                 </div>
-                <div class="page-footer">לקוח יקר, לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד</div>
+                <div class="page-footer">לקוח\u00A0יקר,\u00A0לאחר\u00A0אישורך,\u00A0תוכן\u00A0הגרפיקה\u00A0על\u00A0אחריותך\u00A0בלבד</div>
             </div>
         `;
 
