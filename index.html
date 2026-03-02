@@ -811,27 +811,25 @@
             }
         };
 
-        // On iOS Safari, .save() doesn't work — use share or anchor download
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if (isIOS) {
-            html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
-                const pdfFile = new File([blob], filename, { type: 'application/pdf' });
-                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
-                    await navigator.share({ files: [pdfFile], title: filename });
-                } else {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                }
-            });
-        } else {
-            html2pdf().set(opt).from(page).save();
-        }
+        html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
+            const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+            const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
+
+            // Use native share on mobile if available
+            if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                await navigator.share({ files: [pdfFile], title: filename });
+            } else {
+                // Download via anchor tag
+                const url = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+        });
     });
 </script>
 
