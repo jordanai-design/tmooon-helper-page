@@ -428,34 +428,34 @@
                 text-align: center;
             }
 
-            .a4-page {
+            .a4-page:not(.pdf-render) {
                 width: 100% !important;
                 min-height: auto !important;
                 padding: 10px !important;
                 font-size: 12px;
             }
 
-            .page-client {
+            .a4-page:not(.pdf-render) .page-client {
                 font-size: 18px !important;
             }
 
-            .page-description {
+            .a4-page:not(.pdf-render) .page-description {
                 font-size: 16px !important;
             }
 
-            .page-notes {
+            .a4-page:not(.pdf-render) .page-notes {
                 font-size: 13px !important;
             }
 
-            .images-grid {
+            .a4-page:not(.pdf-render) .images-grid {
                 gap: 4mm !important;
             }
 
-            .image-item img {
+            .a4-page:not(.pdf-render) .image-item img {
                 max-height: 40mm !important;
             }
 
-            .page-footer {
+            .a4-page:not(.pdf-render) .page-footer {
                 position: relative !important;
                 bottom: auto !important;
                 left: auto !important;
@@ -776,7 +776,7 @@
                 <div class="images-grid">
                     ${imagesHtml}
                 </div>
-                <div class="page-footer">לקוח יקר! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד!</div>
+                <div class="page-footer" dir="rtl">&#x202B;לקוח יקר! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד!&#x202C;</div>
             </div>
         `;
 
@@ -811,7 +811,11 @@
             }
         };
 
+        // Add pdf-render class to force desktop A4 styles during capture
+        page.classList.add('pdf-render');
+
         html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
+            page.classList.remove('pdf-render');
             const pdfBlob = new Blob([blob], { type: 'application/pdf' });
             const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
 
