@@ -734,16 +734,17 @@
         return `${parts[2]}.${parts[1]}.${parts[0]}`;
     }
 
-    // Replace regular spaces with non-breaking spaces for html2canvas
-    function nbspText(text) {
-        return text ? text.replace(/ /g, '\u00A0') : '';
+    // Wrap each word in its own span so html2canvas renders spaces correctly
+    function safeText(text) {
+        if (!text) return '';
+        return text.split(' ').map(word => `<span style="display:inline-block">${word}</span>`).join(' ');
     }
 
     function generatePreview() {
         const date = formatDate(document.getElementById('input-date').value);
-        const client = nbspText(document.getElementById('input-client').value);
-        const description = nbspText(document.getElementById('input-description').value);
-        const notes = nbspText(document.getElementById('input-notes').value);
+        const client = safeText(document.getElementById('input-client').value);
+        const description = safeText(document.getElementById('input-description').value);
+        const notes = safeText(document.getElementById('input-notes').value);
 
         // Detect orientation
         const userChoice = document.querySelector('input[name="orientation"]:checked').value;
@@ -766,9 +767,9 @@
 
         // Build images HTML
         const imagesHtml = state.images.map(img => {
-            const dims = (img.dimWidth && img.dimHeight) ? nbspText(`${img.dimWidth}*${img.dimHeight} ס"מ`) : '';
-            const color = nbspText(img.color);
-            const quantity = nbspText(img.quantity);
+            const dims = (img.dimWidth && img.dimHeight) ? safeText(`${img.dimWidth}*${img.dimHeight} ס"מ`) : '';
+            const color = safeText(img.color);
+            const quantity = safeText(img.quantity);
             return `
             <div class="image-item">
                 ${dims ? `<div class="dimensions-top">${dims}</div>` : ''}
@@ -792,7 +793,7 @@
                 <div class="images-grid">
                     ${imagesHtml}
                 </div>
-                <div class="page-footer">לקוח\u00A0יקר,\u00A0לאחר\u00A0אישורך,\u00A0תוכן\u00A0הגרפיקה\u00A0על\u00A0אחריותך\u00A0בלבד</div>
+                <div class="page-footer">${safeText('לקוח יקר, לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד')}</div>
             </div>
         `;
 
