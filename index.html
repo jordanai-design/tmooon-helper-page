@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TMOOONA - יצירת הזמנת עבודה</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+            background: #f5f5f5;
+            direction: rtl;
+        }
+
+        /* ===================== FORM STYLES ===================== */
+        #form-view {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+        }
+
+        #form-view h1 {
+            text-align: center;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 24px;
+        }
+
+        #form-view .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="date"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            direction: rtl;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #B8860B;
+            box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.15);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover {
+            border-color: #B8860B;
+            background: #fffdf5;
+        }
+
+        .upload-area input[type="file"] {
+            display: none;
+        }
+
+        .upload-area p {
+            color: #888;
+            font-size: 15px;
+        }
+
+        .upload-area .icon {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        /* Per-image detail cards */
+        #image-details {
+            margin-top: 16px;
+        }
+
+        .image-card {
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            background: #fafafa;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .image-card img {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .image-card .fields {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .image-card .fields input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 13px;
+            direction: rtl;
+        }
+
+        .image-card .fields label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        .image-card .remove-btn {
+            background: none;
+            border: none;
+            color: #cc3333;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #B8860B;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background: #9a7209;
+        }
+
+        .btn-secondary {
+            background: #eee;
+            color: #444;
+            margin: 0 6px;
+        }
+
+        .btn-secondary:hover {
+            background: #ddd;
+        }
+
+        /* ===================== PREVIEW STYLES ===================== */
+        #preview-view {
+            display: none;
+            padding: 20px;
+        }
+
+        .preview-controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .preview-controls .btn {
+            margin: 0 6px;
+        }
+
+        /* A4 Page */
+        .a4-page {
+            background: white;
+            margin: 0 auto;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+            position: relative;
+            direction: rtl;
+            overflow: hidden;
+        }
+
+        .a4-portrait {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 15mm 15mm 20mm 15mm;
+        }
+
+        .a4-landscape {
+            width: 297mm;
+            min-height: 210mm;
+            padding: 12mm 15mm 18mm 15mm;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 6mm;
+        }
+
+        .page-date {
+            font-size: 14px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .page-client {
+            flex: 1;
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .a4-landscape .page-client {
+            font-size: 32px;
+        }
+
+        .page-logo img {
+            height: 36px;
+            display: block;
+        }
+
+        /* Dashed separator */
+        .separator {
+            border: none;
+            border-top: 2px dashed #ccc;
+            margin: 4mm 0;
+        }
+
+        /* Description */
+        .page-description {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 3mm;
+        }
+
+        .a4-landscape .page-description {
+            font-size: 24px;
+        }
+
+        .page-notes {
+            text-align: center;
+            font-size: 16px;
+            font-weight: 700;
+            color: #B8860B;
+            margin-bottom: 5mm;
+        }
+
+        /* Images grid */
+        .images-grid {
+            display: flex;
+            justify-content: center;
+            gap: 8mm;
+            flex-wrap: wrap;
+            margin: 5mm 0;
+        }
+
+        .image-item {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-item .dimensions-top {
+            font-size: 11px;
+            color: #555;
+            margin-bottom: 2mm;
+            font-weight: 600;
+        }
+
+        .image-item img {
+            max-height: 55mm;
+            max-width: 100%;
+            object-fit: contain;
+            border: 1px solid #eee;
+        }
+
+        .a4-portrait .image-item img {
+            max-height: 120mm;
+        }
+
+        .image-item .meta {
+            margin-top: 2mm;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .image-item .meta .dimensions {
+            font-weight: 600;
+        }
+
+        .image-item .meta .color {
+            color: #B8860B;
+            font-weight: 600;
+        }
+
+        .image-item .quantity-badge {
+            display: inline-block;
+            border: 2px solid #B8860B;
+            color: #B8860B;
+            font-weight: 700;
+            padding: 2px 12px;
+            border-radius: 4px;
+            margin-top: 2mm;
+            font-size: 13px;
+        }
+
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 8mm;
+            left: 15mm;
+            right: 15mm;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        /* ===================== PRINT STYLES ===================== */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+
+            #form-view,
+            .preview-controls {
+                display: none !important;
+            }
+
+            #preview-view {
+                display: block !important;
+                padding: 0;
+            }
+
+            .a4-page {
+                box-shadow: none;
+                margin: 0;
+                page-break-after: always;
+            }
+
+            .a4-portrait {
+                width: 100%;
+                min-height: auto;
+            }
+
+            .a4-landscape {
+                width: 100%;
+                min-height: auto;
+            }
+
+            @page {
+                margin: 0;
+            }
+        }
+
+        @media print and (orientation: landscape) {
+            @page {
+                size: A4 landscape;
+            }
+        }
+
+        @media print and (orientation: portrait) {
+            @page {
+                size: A4 portrait;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- =================== FORM VIEW =================== -->
+<div id="form-view">
+    <h1>TMOOONA</h1>
+    <p class="subtitle">יצירת הזמנת עבודה</p>
+
+    <div class="form-group">
+        <label>תאריך</label>
+        <input type="date" id="input-date">
+    </div>
+
+    <div class="form-group">
+        <label>שם פרויקט / לקוח</label>
+        <input type="text" id="input-client" placeholder="לדוגמה: מלון איילה">
+    </div>
+
+    <div class="form-group">
+        <label>תיאור העבודה</label>
+        <input type="text" id="input-description" placeholder="לדוגמה: משרבייה ברזל חלודה 2 צדדים">
+    </div>
+
+    <div class="form-group">
+        <label>הערות נוספות</label>
+        <input type="text" id="input-notes" placeholder="לדוגמה: תוספת קיפול 2.5 ס״מ בדפנות">
+    </div>
+
+    <div class="form-group">
+        <label>העלאת תמונות</label>
+        <div class="upload-area" id="upload-area">
+            <div class="icon">📁</div>
+            <p>לחצו כאן או גררו תמונות</p>
+            <input type="file" id="input-images" multiple accept="image/*">
+        </div>
+    </div>
+
+    <div id="image-details"></div>
+
+    <div class="form-group" id="orientation-group" style="display:none;">
+        <label>כיוון הדף</label>
+        <div style="display:flex; gap:10px;">
+            <label style="font-weight:400; display:flex; align-items:center; gap:6px;">
+                <input type="radio" name="orientation" value="auto" checked>
+                אוטומטי (לפי רוב התמונות)
+            </label>
+            <label style="font-weight:400; display:flex; align-items:center; gap:6px;">
+                <input type="radio" name="orientation" value="portrait">
+                לאורך (Portrait)
+            </label>
+            <label style="font-weight:400; display:flex; align-items:center; gap:6px;">
+                <input type="radio" name="orientation" value="landscape">
+                לרוחב (Landscape)
+            </label>
+        </div>
+    </div>
+
+    <button class="btn btn-primary" id="generate-btn" disabled>צור הזמנת עבודה</button>
+</div>
+
+<!-- =================== PREVIEW VIEW =================== -->
+<div id="preview-view">
+    <div class="preview-controls">
+        <button class="btn btn-secondary" id="back-btn">חזרה לעריכה</button>
+        <button class="btn btn-primary" id="download-btn">הורד PDF</button>
+        <button class="btn btn-secondary" id="print-btn">הדפס</button>
+    </div>
+
+    <div id="a4-container"></div>
+</div>
+
+<script>
+    // =================== STATE ===================
+    const state = {
+        images: [] // { file, dataUrl, width, height, dimensions, color, quantity }
+    };
+
+    // =================== DOM REFS ===================
+    const formView = document.getElementById('form-view');
+    const previewView = document.getElementById('preview-view');
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('input-images');
+    const imageDetails = document.getElementById('image-details');
+    const generateBtn = document.getElementById('generate-btn');
+    const backBtn = document.getElementById('back-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const printBtn = document.getElementById('print-btn');
+    const a4Container = document.getElementById('a4-container');
+
+    // Set default date to today
+    const today = new Date();
+    const dateStr = today.toISOString().split('T')[0];
+    document.getElementById('input-date').value = dateStr;
+
+    // =================== FILE UPLOAD ===================
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#B8860B';
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.style.borderColor = '#ccc';
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.style.borderColor = '#ccc';
+        handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+        fileInput.value = '';
+    });
+
+    function handleFiles(files) {
+        for (const file of files) {
+            if (!file.type.startsWith('image/')) continue;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    state.images.push({
+                        file,
+                        dataUrl: e.target.result,
+                        width: img.naturalWidth,
+                        height: img.naturalHeight,
+                        dimWidth: '',
+                        dimHeight: '',
+                        color: '',
+                        quantity: '1 יח׳'
+                    });
+                    renderImageCards();
+                    updateGenerateBtn();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function renderImageCards() {
+        imageDetails.innerHTML = '';
+        state.images.forEach((img, i) => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.innerHTML = `
+                <img src="${img.dataUrl}" alt="תמונה ${i + 1}">
+                <div class="fields">
+                    <div>
+                        <label>רוחב (ס״מ)</label>
+                        <input type="text" placeholder="102.5" value="${img.dimWidth}" data-index="${i}" data-field="dimWidth">
+                    </div>
+                    <div>
+                        <label>גובה (ס״מ)</label>
+                        <input type="text" placeholder="228.5" value="${img.dimHeight}" data-index="${i}" data-field="dimHeight">
+                    </div>
+                    <div>
+                        <label>צבע / חומר</label>
+                        <input type="text" placeholder="צבע חלודה" value="${img.color}" data-index="${i}" data-field="color">
+                    </div>
+                    <div>
+                        <label>כמות</label>
+                        <input type="text" placeholder="1 יח׳" value="${img.quantity}" data-index="${i}" data-field="quantity">
+                    </div>
+                </div>
+                <button class="remove-btn" data-index="${i}">&times;</button>
+            `;
+            imageDetails.appendChild(card);
+        });
+
+        // Bind events
+        imageDetails.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                const field = e.target.dataset.field;
+                state.images[idx][field] = e.target.value;
+            });
+        });
+
+        imageDetails.querySelectorAll('.remove-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                state.images.splice(idx, 1);
+                renderImageCards();
+                updateGenerateBtn();
+            });
+        });
+    }
+
+    const orientationGroup = document.getElementById('orientation-group');
+
+    function updateGenerateBtn() {
+        const hasImages = state.images.length > 0;
+        generateBtn.disabled = !hasImages;
+        orientationGroup.style.display = hasImages ? 'block' : 'none';
+    }
+
+    // =================== GENERATE PREVIEW ===================
+    generateBtn.addEventListener('click', generatePreview);
+
+    function formatDate(dateValue) {
+        if (!dateValue) return '';
+        const parts = dateValue.split('-');
+        return `${parts[2]}.${parts[1]}.${parts[0]}`;
+    }
+
+    function generatePreview() {
+        const date = formatDate(document.getElementById('input-date').value);
+        const client = document.getElementById('input-client').value;
+        const description = document.getElementById('input-description').value;
+        const notes = document.getElementById('input-notes').value;
+
+        // Detect orientation
+        const userChoice = document.querySelector('input[name="orientation"]:checked').value;
+        let isPortrait;
+        if (userChoice === 'auto') {
+            const tallCount = state.images.filter(img => img.height > img.width).length;
+            isPortrait = tallCount >= state.images.length / 2;
+        } else {
+            isPortrait = userChoice === 'portrait';
+        }
+        const pageClass = isPortrait ? 'a4-portrait' : 'a4-landscape';
+
+        // Set print orientation
+        const styleTag = document.getElementById('dynamic-print-style');
+        if (styleTag) styleTag.remove();
+        const printStyle = document.createElement('style');
+        printStyle.id = 'dynamic-print-style';
+        printStyle.textContent = `@media print { @page { size: A4 ${isPortrait ? 'portrait' : 'landscape'}; margin: 0; } }`;
+        document.head.appendChild(printStyle);
+
+        // Build images HTML
+        const imagesHtml = state.images.map(img => {
+            const dims = (img.dimWidth && img.dimHeight) ? `${img.dimWidth}*${img.dimHeight} ס"מ` : '';
+            return `
+            <div class="image-item">
+                ${dims ? `<div class="dimensions-top">${dims}</div>` : ''}
+                ${img.color ? `<div class="meta"><span class="color">${img.color}</span></div>` : ''}
+                ${img.quantity ? `<div class="quantity-badge">${img.quantity}</div>` : ''}
+                <img src="${img.dataUrl}" alt="">
+            </div>
+        `;
+        }).join('');
+
+        a4Container.innerHTML = `
+            <div class="a4-page ${pageClass}" id="a4-page">
+                <div class="page-header">
+                    <div class="page-logo"><img src="tmooona_logo.png" alt="TMOOONA"></div>
+                    <div class="page-client">${client}</div>
+                    <div class="page-date">${date}</div>
+                </div>
+                <hr class="separator">
+                <div class="page-description">${description}</div>
+                ${notes ? `<div class="page-notes">${notes}</div>` : ''}
+                <div class="images-grid">
+                    ${imagesHtml}
+                </div>
+                <div class="page-footer">לקוח יקר! לאחר אישורך, תוכן הגרפיקה על אחריותך בלבד!</div>
+            </div>
+        `;
+
+        formView.style.display = 'none';
+        previewView.style.display = 'block';
+    }
+
+    // =================== EXPORT ===================
+    backBtn.addEventListener('click', () => {
+        previewView.style.display = 'none';
+        formView.style.display = 'block';
+    });
+
+    printBtn.addEventListener('click', () => {
+        window.print();
+    });
+
+    downloadBtn.addEventListener('click', () => {
+        const page = document.getElementById('a4-page');
+        const isLandscape = page.classList.contains('a4-landscape');
+
+        const opt = {
+            margin: 0,
+            filename: `${document.getElementById('input-client').value || 'work-order'}.pdf`,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: {
+                unit: 'mm',
+                format: 'a4',
+                orientation: isLandscape ? 'landscape' : 'portrait'
+            }
+        };
+
+        html2pdf().set(opt).from(page).save();
+    });
+</script>
+
+</body>
+</html>
