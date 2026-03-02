@@ -677,11 +677,11 @@
                 <img src="${img.dataUrl}" alt="תמונה ${i + 1}">
                 <div class="fields">
                     <div>
-                        <label>רוחב (ס״מ)</label>
+                        <label>Width (cm)</label>
                         <input type="text" placeholder="102.5" value="${img.dimWidth}" data-index="${i}" data-field="dimWidth">
                     </div>
                     <div>
-                        <label>גובה (ס״מ)</label>
+                        <label>Height (cm)</label>
                         <input type="text" placeholder="228.5" value="${img.dimHeight}" data-index="${i}" data-field="dimHeight">
                     </div>
                     <div>
@@ -767,7 +767,7 @@
 
         // Build images HTML
         const imagesHtml = state.images.map(img => {
-            const dims = (img.dimWidth && img.dimHeight) ? `<span dir="ltr">${img.dimHeight} x ${img.dimWidth} [cm]</span>` : '';
+            const dims = (img.dimWidth && img.dimHeight) ? `<span style="display:inline-flex;direction:ltr;unicode-bidi:bidi-override;gap:4px;"><span>${img.dimWidth}</span><span>x</span><span>${img.dimHeight}</span><span>[cm]</span></span>` : '';
             const color = safeText(img.color);
             const quantity = safeText(img.quantity);
             return `
