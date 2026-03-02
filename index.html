@@ -811,12 +811,23 @@
             }
         };
 
-        // On iOS Safari, .save() doesn't work — open blob in new tab instead
+        // On iOS Safari, .save() doesn't work — use share or anchor download
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (isIOS) {
-            html2pdf().set(opt).from(page).outputPdf('blob').then(blob => {
-                const url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
+            html2pdf().set(opt).from(page).outputPdf('blob').then(async blob => {
+                const pdfFile = new File([blob], filename, { type: 'application/pdf' });
+                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    await navigator.share({ files: [pdfFile], title: filename });
+                } else {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
             });
         } else {
             html2pdf().set(opt).from(page).save();
