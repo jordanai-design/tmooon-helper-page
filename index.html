@@ -767,7 +767,7 @@
 
         // Build images HTML
         const imagesHtml = state.images.map(img => {
-            const dims = (img.dimWidth && img.dimHeight) ? `<span dir="ltr">${img.dimWidth} x ${img.dimHeight} [cm]</span>` : '';
+            const dims = (img.dimWidth && img.dimHeight) ? `<span dir="ltr">${img.dimHeight} x ${img.dimWidth} [cm]</span>` : '';
             const color = safeText(img.color);
             const quantity = safeText(img.quantity);
             return `
